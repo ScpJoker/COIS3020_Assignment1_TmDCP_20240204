@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -69,27 +69,55 @@ namespace COIS3020_Assignment1_TmDC_20240204
         // 3 marks
         // Add a server with the given name and connect it to the other server
         // Return true if successful; otherwise return false
+        //public bool AddServer(string name, string other)
+        //{
+        //    //Finding if server is not empty, then no add due already exists
+        //    if(FindServer(name) != -1) return false;
+        //    //Find if number of servers are larger than server capacity:
+        //    if(NumServers >= V.Length) DoubleCapacity();
+
+        //    //Whole process to create a new server:
+        //    WebServer nServer = new WebServer(name);
+        //    V[NumServers] = nServer;
+
+        //    //Setting 
+        //    int indexOther = FindServer(other);
+        //    if (indexOther != -1) {
+        //        E[NumServers, indexOther] = true;
+        //        E[indexOther, NumServers] = true;
+        //    }
+
+        //    NumServers++; //An increase
+        //    return true;
+        //}
         public bool AddServer(string name, string other)
         {
-            //Finding if server is not empty, then no add due already exists
-            if(FindServer(name) != -1) return false;
-            //Find if number of servers are larger than server capacity:
-            if(NumServers >= V.Length) DoubleCapacity();
+            // Check if the server with the given name already exists
+            if (FindServer(name) != -1)
+                return false;
 
-            //Whole process to create a new server:
-            WebServer nServer = new WebServer(name);
-            V[NumServers] = nServer;
+            // Double the capacity if needed
+            if (NumServers >= V.Length)
+                DoubleCapacity();
 
-            //Setting 
-            int indexOther = FindServer(other);
-            if (indexOther != -1) {
-                E[NumServers, indexOther] = true;
-                E[indexOther, NumServers] = true;
+            // Create a new server and add it to the graph
+            WebServer newServer = new WebServer(name);
+            V[NumServers] = newServer;
+
+            // Connect the new server to the 'other' server if it exists
+            int otherIndex = FindServer(other);
+            if (otherIndex != -1)
+            {
+                E[NumServers, otherIndex] = true;
+                E[otherIndex, NumServers] = true;
             }
 
-            NumServers++; //An increase
+            // Increment the number of servers
+            NumServers++;
+
             return true;
         }
+
         // 3 marks
         // Add a webpage to the server with the given name
         // Return true if successful; other return false
@@ -176,32 +204,155 @@ namespace COIS3020_Assignment1_TmDC_20240204
         // Return all servers that would disconnect the server graph into
         // two or more disjoint graphs if ever one of them would go down
         // Hint: Use a variation of the depth-first search
-        
-        //public string[] CriticalServers()
-        //{
 
-        //}
-        
+        public string[] CriticalServers()
+        {
+            bool[] visited = new bool[NumServers];
+            int[] discoveryTime = new int[NumServers];
+            int[] low = new int[NumServers];
+            int[] parent = new int[NumServers];
+            bool[] articulationPoint = new bool[NumServers];
+            int time = 0;
+
+            // Initialize arrays
+            for (int i = 0; i < NumServers; i++)
+            {
+                parent[i] = -1;
+                visited[i] = false;
+                articulationPoint[i] = false;
+            }
+
+            // Perform DFS for each unvisited vertex
+            for (int i = 0; i < NumServers; i++)
+            {
+                if (!visited[i])
+                {
+                    CriticalServersDFS(i, visited, discoveryTime, low, parent, ref articulationPoint, ref time);
+                }
+            }
+
+            // Collect and return the names of articulation points
+            List<string> criticalServers = new List<string>();
+            for (int i = 0; i < NumServers; i++)
+            {
+                if (articulationPoint[i])
+                {
+                    criticalServers.Add(V[i].Name);
+                }
+            }
+
+            return criticalServers.ToArray();
+        }
+
+        private void CriticalServersDFS(int u, bool[] visited, int[] discoveryTime, int[] low, int[] parent, ref bool[] articulationPoint, ref int time)
+        {
+            int children = 0;
+            visited[u] = true;
+            discoveryTime[u] = low[u] = ++time;
+
+            for (int v = 0; v < NumServers; v++)
+            {
+                if (E[u, v])
+                {
+                    if (!visited[v])
+                    {
+                        children++;
+                        parent[v] = u;
+                        CriticalServersDFS(v, visited, discoveryTime, low, parent, ref articulationPoint, ref time);
+
+                        // Check if the subtree rooted with v has a connection to one of the ancestors of u
+                        low[u] = Math.Min(low[u], low[v]);
+
+                        // u is an articulation point in following cases:
+                        // (1) u is root of DFS tree and has two or more children.
+                        // (2) If u is not root and low value of one of its children is more than discovery value of u.
+                        if (parent[u] == -1 && children > 1)
+                            articulationPoint[u] = true;
+                        if (parent[u] != -1 && low[v] >= discoveryTime[u])
+                            articulationPoint[u] = true;
+                    }
+                    else if (v != parent[u])
+                    {
+                        low[u] = Math.Min(low[u], discoveryTime[v]);
+                    }
+                }
+            }
+        }
+
+
         // 6 marks
         // Return the shortest path from one server to another
         // Hint: Use a variation of the breadth-first search
+        //public int ShortestPath(string from, string to)
+        //{
+        //    //In theory, using breadth first search can find shortest path quicker.
+
+        //    int i; //As index
+        //    bool[] visited = new bool[NumServers];
+
+        //    for(i = 0; i < NumServers; i++)
+        //        visited[i] = false;
+        //    for(i = 0; i < NumServers; i++) {
+        //        //Checking if not visited
+        //        if(!visited[i]){
+        //            ShortestPath(from, visited);
+        //            Console.WriteLine();
+        //        }
+        //    }
+        //    return 0;
+        //}
         public int ShortestPath(string from, string to)
         {
-            //In theory, using breadth first search can find shortest path quicker.
+            int startIndex = FindServer(from);
+            int endIndex = FindServer(to);
 
-            int i; //As index
+            // Check if both servers exist
+            if (startIndex == -1 || endIndex == -1)
+                return -1;
+
+            if (startIndex == endIndex)
+                return 0;
+
+            // Initialize visited array and distances
             bool[] visited = new bool[NumServers];
-
-            for(i = 0; i < NumServers; i++)
+            int[] distances = new int[NumServers];
+            for (int i = 0; i < NumServers; i++)
+            {
                 visited[i] = false;
-            for(i = 0; i < NumServers; i++) {
-                //Checking if not visited
-                if(!visited[i]){
-                    ShortestPath(from, visited);
-                    Console.WriteLine();
+                distances[i] = int.MaxValue;
+            }
+
+            // BFS Queue
+            Queue<int> queue = new Queue<int>();
+
+            // Start from the 'from' server
+            visited[startIndex] = true;
+            distances[startIndex] = 0;
+            queue.Enqueue(startIndex);
+
+            // BFS loop
+            while (queue.Count > 0)
+            {
+                int current = queue.Dequeue();
+
+                // Check all adjacent servers
+                for (int i = 0; i < NumServers; i++)
+                {
+                    if (E[current, i] && !visited[i])
+                    {
+                        visited[i] = true;
+                        distances[i] = distances[current] + 1;
+                        queue.Enqueue(i);
+
+                        // If the 'to' server is found, return the distance
+                        if (i == endIndex)
+                            return distances[i];
+                    }
                 }
             }
-            return 0;
+
+            // If the 'to' server is not reachable from the 'from' server
+            return -1;
         }
 
         //A private method of shortestPath:
@@ -231,21 +382,65 @@ namespace COIS3020_Assignment1_TmDC_20240204
         // 4 marks
         // Print the name and connections of each server as well as
         // the names of the webpages it hosts
+        //public void PrintGraph()
+        //{
+        //    for (int i = 0; i < NumServers; i++)
+        //    {
+        //        Console.WriteLine($"Server name: {V[i].Name}");
+        //        //Checking if exists, then show connection
+        //        for(int j = 0; j < NumServers; j++) {
+        //            if (E[i, j] == true)
+        //                Console.WriteLine("Connection: {0} and {1}: {2}", V[i], V[j], E[i, j]);
+        //        }
+        //        Console.WriteLine();
+        //    }
+        //    Console.WriteLine();
+        //}
         public void PrintGraph()
         {
             for (int i = 0; i < NumServers; i++)
             {
-                Console.WriteLine($"Server name: {V[i].Name}");
-                //Checking if exists, then show connection
-                for(int j = 0; j < NumServers; j++) {
-                    if (E[i, j] == true)
-                        Console.WriteLine("Connection: {0} and {1}: {2}", V[i], V[j], E[i, j]);
+                WebServer server = V[i];
+
+                // Print server name
+                Console.WriteLine($"Server name: {server.Name}");
+
+                // Print connections
+                Console.Write("Connections: ");
+                bool hasConnections = false;
+                for (int j = 0; j < NumServers; j++)
+                {
+                    if (E[i, j])
+                    {
+                        Console.Write($"{V[j].Name} ");
+                        hasConnections = true;
+                    }
+                }
+                if (!hasConnections)
+                {
+                    Console.Write("None");
                 }
                 Console.WriteLine();
+
+                // Print hosted webpages
+                Console.Write("Hosted WebPages: ");
+                if (server.P.Count > 0)
+                {
+                    foreach (WebPage webpage in server.P)
+                    {
+                        Console.Write($"{webpage.Name} ");
+                    }
+                }
+                else
+                {
+                    Console.Write("None");
+                }
+                Console.WriteLine();
+                Console.WriteLine();
             }
-            Console.WriteLine();
         }
-        
+
+
         //tempororary test:
         public void doubleCapacity()
         {
