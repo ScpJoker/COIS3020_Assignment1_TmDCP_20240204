@@ -1,0 +1,50 @@
+using System;
+
+namespace COIS3020_Assignment1_TmDC_20240204
+{
+    class Test_Server
+    {
+        static void Main(string[] args)
+        {
+            ServerGraph serverGraph = new ServerGraph();
+
+            // Add servers
+            serverGraph.AddServer("Server1", null);
+            serverGraph.AddServer("Server2", "Server1");
+            serverGraph.AddServer("Server3", "Server1");
+            serverGraph.AddServer("Server4", "Server2");
+            serverGraph.AddServer("Server5", "Server3");
+
+            // Add connections
+            serverGraph.AddConnection("Server2", "Server3");
+            serverGraph.AddConnection("Server4", "Server5");
+
+            // Print the graph before removals
+            Console.WriteLine("Graph before removals:");
+            serverGraph.PrintGraph();
+
+            // Remove a server
+            serverGraph.RemoveServer("Server5", "Server4");
+
+            // Print the graph after removal
+            Console.WriteLine("\nGraph after removing Server5:");
+            serverGraph.PrintGraph();
+
+            // Find critical servers
+            string[] criticalServers = serverGraph.CriticalServers();
+            Console.WriteLine("\nCritical Servers:");
+            foreach (string server in criticalServers)
+            {
+                Console.WriteLine(server);
+            }
+
+            // Calculate the shortest path
+            int shortestPath = serverGraph.ShortestPath("Server1", "Server4");
+            Console.WriteLine($"\nShortest path from Server1 to Server4: {shortestPath}");
+
+            // Final graph state
+            Console.WriteLine("\nFinal graph state:");
+            serverGraph.PrintGraph();
+        }
+    }
+}
