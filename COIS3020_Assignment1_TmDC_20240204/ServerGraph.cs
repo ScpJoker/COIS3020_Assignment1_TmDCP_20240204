@@ -151,7 +151,37 @@ namespace COIS3020_Assignment1_TmDC_20240204
             return false;
 
             //setting indecies
-            //
+            //  
+        }
+        
+        // Bonus
+        // 3 marks (Bonus)
+        // Remove the webpage from the server with the given name
+        // Return true if successful; otherwise return false
+        public bool RemoveWebPage(string webpageName, string serverName)
+        {
+            // Find the server by its name
+            int serverIndex = FindServer(serverName);
+            if (serverIndex == -1)
+            {
+                // Server not found
+                return false;
+            }
+
+            // Get the server
+            WebServer server = V[serverIndex];
+
+            // Find and remove the webpage from the server's list
+            int pageIndex = server.P.FindIndex(page => page.Name == webpageName);
+            if (pageIndex != -1)
+            {
+                // Webpage found, remove it
+                server.P.RemoveAt(pageIndex);
+                return true;
+            }
+
+            // Webpage not found on the server
+            return false;
         }
         // 3 marks
         // Add a connection from one server to another
